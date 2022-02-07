@@ -1,0 +1,6 @@
+torch
+pillow
+numpy
+ipywidgets
+scikit-image
+matplotlib
