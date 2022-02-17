@@ -7,6 +7,7 @@ from .draw import draw_bchw
 from .show import show_bchw
 
 from .face_detection import FaceDetector
+from .face_parsing import FaceParser
 
 
 def _split_name(name: str) -> Tuple[str, Optional[str]]:
@@ -24,3 +25,12 @@ def face_detector(name: str, device: torch.device) -> FaceDetector:
         return RetinaFaceDetector(conf_name).to(device)
     else:
         raise RuntimeError(f'Unknown detector type: {detector_type}')
+
+
+def face_parser(name: str, device: torch.device) -> FaceParser:
+    parser_type, conf_name = _split_name(name)
+    if parser_type == 'farl':
+        from .face_parsing import FaRLFaceParser
+        return FaRLFaceParser(conf_name).to(device)
+    else:
+        raise RuntimeError(f'Unknown parser type: {parser_type}')

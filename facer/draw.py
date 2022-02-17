@@ -1,8 +1,6 @@
 from typing import Dict, List
 from cv2 import circle
 import torch
-import numpy as np
-import skimage
 from skimage.draw import line_aa, circle_perimeter_aa
 
 

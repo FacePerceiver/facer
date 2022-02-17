@@ -1,6 +1,6 @@
 # largely borrowed from https://github.dev/elliottzheng/batch-face/face_detection/alignment.py
 
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -647,7 +647,7 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
         )
         for loc_i, conf_i, landms_i in zip(loc, conf, landms)
     ]
-    
+
     # print(all_dets)
 
     # FIXME: fix the return structure
@@ -671,6 +671,19 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
 
 
 class RetinaFaceDetector(FaceDetector):
+    """RetinaFaceDetector
+
+    Args:
+        images (torch.Tensor): b x c x h x w
+
+    Returns:
+        data (List[Dict[str, torch.Tensor]]):
+        
+            * rects: n x 4 (x1, y1, x2, y2)
+            * points: n x 5 x 2 (x, y)
+            * scores: n
+    """
+
     def __init__(self, conf_name: Optional[str] = None,
                  model_path: Optional[str] = None) -> None:
         super().__init__()
@@ -678,5 +691,5 @@ class RetinaFaceDetector(FaceDetector):
             conf_name = 'mobilenet'
         self.net = load_net(model_path, conf_name)
 
-    def forward(self, images):
+    def forward(self, images: torch.Tensor) -> List[Dict[str, torch.Tensor]]:
         return batch_detect(self.net, images, threshold=0.5)
