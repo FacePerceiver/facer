@@ -23,3 +23,6 @@ def write_hwc(image: torch.Tensor, path: str):
     """
 
     Image.fromarray(image.cpu().numpy()).save(path)
+
+
+
