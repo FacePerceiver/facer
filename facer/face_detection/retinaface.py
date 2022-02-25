@@ -690,6 +690,7 @@ class RetinaFaceDetector(FaceDetector):
         if conf_name is None:
             conf_name = 'mobilenet'
         self.net = load_net(model_path, conf_name)
+        self.eval()
 
     def forward(self, images: torch.Tensor) -> List[Dict[str, torch.Tensor]]:
         return batch_detect(self.net, images, threshold=0.5)

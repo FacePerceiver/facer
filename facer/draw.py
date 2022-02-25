@@ -26,11 +26,11 @@ _static_label_colors = [
     np.array([88, 233, 135], np.float32) / 255.0,  # ulip
     np.array([0, 117, 27], np.float32) / 255.0,  # llip
     np.array([255, 76, 249], np.float32) / 255.0,  # imouth
-    np.array((1.0, 0.0, 0.0), np.float32), # hair
-    np.array((255, 250, 100), np.float32) / 255.0, # lr
-    np.array((255, 250, 100), np.float32) / 255.0, # rr
-    np.array((250, 245, 50), np.float32) / 255.0, # neck
-    np.array((0.0, 1.0, 0.5), np.float32), # cloth
+    np.array((1.0, 0.0, 0.0), np.float32),  # hair
+    np.array((255, 250, 100), np.float32) / 255.0,  # lr
+    np.array((255, 250, 100), np.float32) / 255.0,  # rr
+    np.array((250, 245, 50), np.float32) / 255.0,  # neck
+    np.array((0.0, 1.0, 0.5), np.float32),  # cloth
     np.array((1.0, 0.0, 0.5), np.float32),
 ] + _gen_random_colors(256)
 
@@ -124,12 +124,13 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
         if tag == 'seg':
             label_names = batch_content['label_names']
-            for seg_logits, seg_effective_region in zip(batch_content['logits'], batch_content['effective_region']):
+            for seg_logits, seg_effective_region in zip(
+                    batch_content['logits'], batch_content['effective_region']):
                 # content: nclasses x h x w
                 seg_labels = seg_logits.argmax(dim=0).cpu().numpy()
                 if 'background' in label_names:
                     seg_labels[seg_effective_region.cpu().numpy() <
-                               0.5] = label_names.index('background')
+                               0.8] = label_names.index('background')
                 image = (_blend_labels(image.astype(np.float32) /
                          256, seg_labels, label_names_dict=label_names) * 256).astype(dtype)
 
