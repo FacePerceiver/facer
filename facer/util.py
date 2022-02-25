@@ -1,6 +1,6 @@
 import torch
 import torch.utils.model_zoo
-from typing import Optional
+from typing import Optional, Union, List
 import math
 import os
 from urllib.request import urlopen, Request
@@ -44,33 +44,42 @@ def bchw2hwc(images: torch.Tensor, nrows: Optional[int] = None, border: int = 2,
     return result
 
 
-def download_jit(url_or_path: str, model_dir=None, map_location=None):
-    if validators.url(url_or_path):
-        url = url_or_path
-        if model_dir is None:
-            hub_dir = torch.hub.get_dir()
-            model_dir = os.path.join(hub_dir, 'checkpoints')
+def download_jit(url_or_paths: Union[str, List[str]], model_dir=None, map_location=None):
+    if isinstance(url_or_paths, str):
+        url_or_paths = [url_or_paths]
 
+    for url_or_path in url_or_paths:
         try:
-            os.makedirs(model_dir)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                # Directory already exists, ignore.
-                pass
+            if validators.url(url_or_path):
+                url = url_or_path
+                if model_dir is None:
+                    hub_dir = torch.hub.get_dir()
+                    model_dir = os.path.join(hub_dir, 'checkpoints')
+
+                try:
+                    os.makedirs(model_dir)
+                except OSError as e:
+                    if e.errno == errno.EEXIST:
+                        # Directory already exists, ignore.
+                        pass
+                    else:
+                        # Unexpected OSError, re-raise.
+                        raise
+
+                parts = urlparse(url)
+                filename = os.path.basename(parts.path)
+                cached_file = os.path.join(model_dir, filename)
+                if not os.path.exists(cached_file):
+                    sys.stderr.write(
+                        'Downloading: "{}" to {}\n'.format(url, cached_file))
+                    hash_prefix = None
+                    torch.hub.download_url_to_file(
+                        url, cached_file, hash_prefix, progress=True)
             else:
-                # Unexpected OSError, re-raise.
-                raise
+                cached_file = url_or_path
 
-        parts = urlparse(url)
-        filename = os.path.basename(parts.path)
-        cached_file = os.path.join(model_dir, filename)
-        if not os.path.exists(cached_file):
-            sys.stderr.write(
-                'Downloading: "{}" to {}\n'.format(url, cached_file))
-            hash_prefix = None
-            torch.hub.download_url_to_file(
-                url, cached_file, hash_prefix, progress=True)
-    else:
-        cached_file = url_or_path
+            return torch.jit.load(cached_file, map_location=map_location)
+        except:
+            sys.stderr.write(f'failed downloading from {url_or_path}')
 
-    return torch.jit.load(cached_file, map_location=map_location)
+    raise RuntimeError('failed to download jit models from all given urls')
