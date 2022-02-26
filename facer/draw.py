@@ -113,6 +113,7 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     rr, cc, val = line_aa(yy1, xx1, yy2, xx2)
                     val = val[:, None][:, [0, 0, 0]]
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
+
         if tag == 'points':
             for content in batch_content:
                 # content: npoints x 2
@@ -122,17 +123,16 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     rr, cc, val = circle_perimeter_aa(y, x, 1)
                     val = val[:, None][:, [0, 0, 0]]
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
+
         if tag == 'seg':
             label_names = batch_content['label_names']
-            for seg_logits, seg_effective_region in zip(
-                    batch_content['logits'], batch_content['effective_region']):
+            for seg_logits in batch_content['logits']:
                 # content: nclasses x h x w
-                seg_labels = seg_logits.argmax(dim=0).cpu().numpy()
-                if 'background' in label_names:
-                    seg_labels[seg_effective_region.cpu().numpy() <
-                               0.8] = label_names.index('background')
+                seg_probs = seg_logits.softmax(dim=0)
+                seg_labels = seg_probs.argmax(dim=0).cpu().numpy()
                 image = (_blend_labels(image.astype(np.float32) /
-                         256, seg_labels, label_names_dict=label_names) * 256).astype(dtype)
+                         255, seg_labels, 
+                         label_names_dict=label_names) * 255).astype(dtype)
 
     return torch.from_numpy(image).to(device=device)
 

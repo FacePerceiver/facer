@@ -4,14 +4,14 @@ import torch
 import torch.nn.functional as F
 
 from ..util import download_jit
-from ..transform import get_face_align_grid, get_face_crop_grid, grid_sample
+from ..transform import get_face_align_grid, get_face_crop_grid
 from .base import FaceParser
 
 pretrain_settings = {
     'celebm/448': {
         'url': [
-            'https://github.com/YANG-H/FaceR-Private/releases/download/v0.0.1/face_parsing.farl.celebm.main_ema_181500_jit.pt',
-            '/home/haya/facer/.local/face_parsing.farl.celebm.main_ema_181500_jit.pt',
+            'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.celebm.main_ema_181500_jit.pt',
+            # '/home/haya/facer/.local/face_parsing.farl.celebm.main_ema_181500_jit.pt',
         ],
         'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=0.8, warp_factor=0.0),
         'label_names': ['background', 'neck', 'face', 'cloth', 'rr', 'lr', 'rb', 'lb', 're',
@@ -20,7 +20,8 @@ pretrain_settings = {
     },
     'lapa/448': {
         'url': [
-            '/home/haya/facer/.local/face_parsing.farl.lapa.main_ema_136500_jit.pt',
+            'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit.pt',
+            # '/home/haya/facer/.local/face_parsing.farl.lapa.main_ema_136500_jit.pt',
         ],
         'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=1.0, warp_factor=0.8),
         'label_names': ['background', 'face', 'rb', 'lb', 're',
@@ -43,9 +44,12 @@ class FaRLFaceParser(FaceParser):
 
     def forward(self, images, data):
         images = images.float() / 256.0
-        image_ids, grid, inv_grid = pretrain_settings[self.conf_name]['get_grid_fn'](
-            images, data)
-        w_images = grid_sample(images, image_ids, grid)
+        with torch.no_grad():
+            image_ids, grid, inv_grid = pretrain_settings[self.conf_name]['get_grid_fn'](
+                images, data)
+
+        w_images = F.grid_sample(
+            images[image_ids], grid, mode='bilinear', align_corners=False)
 
         w_seg_logits, _ = self.net(w_images)  # (b*n) x c x h x w
 
@@ -53,15 +57,15 @@ class FaRLFaceParser(FaceParser):
 
         seg_logits = F.grid_sample(
             w_seg_logits, inv_grid, mode='bilinear', align_corners=False)
-        seg_effective_region = F.grid_sample(
-            w_seg_effective_region, inv_grid, mode='bilinear', align_corners=False,
-            padding_mode='zeros')
+        # seg_effective_region = F.grid_sample(
+        #     w_seg_effective_region, inv_grid, mode='bilinear', align_corners=False,
+        #     padding_mode='zeros')
 
         for image_id, datum in enumerate(data):
             selected = [image_id == i for i in image_ids]
             datum['seg'] = {
                 'logits': seg_logits[selected, :, :, :],
-                'effective_region': seg_effective_region[selected, 0],
+                # 'effective_region': seg_effective_region[selected, 0],
                 'label_names': pretrain_settings[self.conf_name]['label_names']
             }
         return data

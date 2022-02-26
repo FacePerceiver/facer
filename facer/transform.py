@@ -408,6 +408,3 @@ def get_face_crop_grid(images: torch.Tensor, data: List[Dict[str, torch.Tensor]]
         offset_xy=offset_xy)
     return get_grid(images, data, get_matrix, 'rects', target_shape, warp_factor)
 
-
-def grid_sample(images, image_ids, grid, mode='bilinear', align_corners=False) -> torch.Tensor:
-    return F.grid_sample(images[image_ids], grid, mode=mode, align_corners=align_corners)
