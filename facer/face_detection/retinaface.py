@@ -650,7 +650,6 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
 
     # print(all_dets)
 
-    # FIXME: fix the return structure
     ret = []
     for faces_in_one_image in all_dets:
         batched_rects = []

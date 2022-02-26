@@ -29,6 +29,20 @@ pretrain_settings = {
 
 
 class FaRLFaceParser(FaceParser):
+    """ The face parsing models from [FaRL](https://github.com/FacePerceiver/FaRL).
+
+    Please consider citing 
+    ```bibtex
+        @article{zheng2021farl,
+            title={General Facial Representation Learning in a Visual-Linguistic Manner},
+            author={Zheng, Yinglin and Yang, Hao and Zhang, Ting and Bao, Jianmin and Chen, 
+                Dongdong and Huang, Yangyu and Yuan, Lu and Chen, 
+                Dong and Zeng, Ming and Wen, Fang},
+            journal={arXiv preprint arXiv:2112.03109},
+            year={2021}
+        }
+    ```
+    """
     def __init__(self, conf_name: Optional[str] = None,
                  model_path: Optional[str] = None) -> None:
         super().__init__()

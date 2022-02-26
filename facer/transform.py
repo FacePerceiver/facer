@@ -263,9 +263,9 @@ class GetTransformMap:
             "Face parsing with roi tanh-warping." In Proceedings of the IEEE/CVF 
             Conference on Computer Vision and Pattern Recognition, pp. 5654-5663. 2019.
 
-        [2] Zheng, Yinglin, Hao Yang, Ting Zhang, Jianmin Bao, Dongdong Chen, Yangyu Huang,
-            Lu Yuan, Dong Chen, Ming Zeng and Fang Wen. "General Facial Representation 
-            Learning in a Visual-Linguistic Manner" In arxiv.
+        [2] Zheng, Yinglin, Hao Yang, Ting Zhang, Jianmin Bao, Dongdong Chen, Yangyu Huang, 
+            Lu Yuan, Dong Chen, Ming Zeng, and Fang Wen. "General Facial Representation 
+            Learning in a Visual-Linguistic Manner." arXiv preprint arXiv:2112.03109 (2021).
 
     Please cite the paper on your usage.
 
@@ -301,9 +301,9 @@ class GetInvertedTransformMap:
             "Face parsing with roi tanh-warping." In Proceedings of the IEEE/CVF 
             Conference on Computer Vision and Pattern Recognition, pp. 5654-5663. 2019.
 
-        [2] Zheng, Yinglin, Hao Yang, Ting Zhang, Jianmin Bao, Dongdong Chen, Yangyu Huang,
-            Lu Yuan, Dong Chen, Ming Zeng and Fang Wen. "General Facial Representation 
-            Learning in a Visual-Linguistic Manner" In arxiv.
+        [2] Zheng, Yinglin, Hao Yang, Ting Zhang, Jianmin Bao, Dongdong Chen, Yangyu Huang, 
+            Lu Yuan, Dong Chen, Ming Zeng, and Fang Wen. "General Facial Representation 
+            Learning in a Visual-Linguistic Manner." arXiv preprint arXiv:2112.03109 (2021).
 
     Please cite the paper on your usage.
 
@@ -349,8 +349,8 @@ def get_grid(images: torch.Tensor, data: List[Dict[str, torch.Tensor]],
     image_ids = []
 
     for image_id, datum in enumerate(data):
-        batch_src = datum[src_name].cpu().numpy()  # n x 5 x 2 (x, y)
-        for face_id, src in enumerate(batch_src):
+        batch_src = datum[src_name].cpu().numpy()  # points (n x 5 x 2) or rect (n x 4)
+        for src in batch_src:
             matrix = get_matrix(src)  # 4 x 4
 
             transform_map = get_transform_map(matrix)  # h x w x 2
