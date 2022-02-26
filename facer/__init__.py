@@ -4,7 +4,7 @@ import torch
 from .io import read_hwc, write_hwc
 from .util import hwc2bchw, bchw2hwc
 from .draw import draw_bchw
-from .show import show_bchw
+from .show import show_bchw, show_bhw
 
 from .face_detection import FaceDetector
 from .face_parsing import FaceParser

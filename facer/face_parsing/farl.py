@@ -11,7 +11,6 @@ pretrain_settings = {
     'celebm/448': {
         'url': [
             'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.celebm.main_ema_181500_jit.pt',
-            # '/home/haya/facer/.local/face_parsing.farl.celebm.main_ema_181500_jit.pt',
         ],
         'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=0.8, warp_factor=0.0),
         'label_names': ['background', 'neck', 'face', 'cloth', 'rr', 'lr', 'rb', 'lb', 're',
@@ -21,7 +20,6 @@ pretrain_settings = {
     'lapa/448': {
         'url': [
             'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit.pt',
-            # '/home/haya/facer/.local/face_parsing.farl.lapa.main_ema_136500_jit.pt',
         ],
         'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=1.0, warp_factor=0.8),
         'label_names': ['background', 'face', 'rb', 'lb', 're',
@@ -43,7 +41,7 @@ class FaRLFaceParser(FaceParser):
         self.eval()
 
     def forward(self, images, data):
-        images = images.float() / 256.0
+        images = images.float() / 255.0
         with torch.no_grad():
             image_ids, grid, inv_grid = pretrain_settings[self.conf_name]['get_grid_fn'](
                 images, data)
@@ -53,19 +51,13 @@ class FaRLFaceParser(FaceParser):
 
         w_seg_logits, _ = self.net(w_images)  # (b*n) x c x h x w
 
-        w_seg_effective_region = torch.ones_like(w_seg_logits[:, [0], :, :])
-
         seg_logits = F.grid_sample(
             w_seg_logits, inv_grid, mode='bilinear', align_corners=False)
-        # seg_effective_region = F.grid_sample(
-        #     w_seg_effective_region, inv_grid, mode='bilinear', align_corners=False,
-        #     padding_mode='zeros')
 
         for image_id, datum in enumerate(data):
             selected = [image_id == i for i in image_ids]
             datum['seg'] = {
                 'logits': seg_logits[selected, :, :, :],
-                # 'effective_region': seg_effective_region[selected, 0],
                 'label_names': pretrain_settings[self.conf_name]['label_names']
             }
         return data
