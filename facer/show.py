@@ -14,6 +14,8 @@ def set_figsize(size: Optional[Tuple[int, int]] = None):
 
 
 def show_hwc(image: torch.Tensor):
+    if image.dtype != torch.uint8:
+        image = image.to(torch.uint8)
     pimage = Image.fromarray(image.cpu().numpy())
     plt.imshow(pimage)
     plt.show()
