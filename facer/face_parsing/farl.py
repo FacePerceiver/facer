@@ -47,7 +47,7 @@ class FaRLFaceParser(FaceParser):
                  model_path: Optional[str] = None) -> None:
         super().__init__()
         if conf_name is None:
-            conf_name = 'celebm/448'
+            conf_name = 'lapa/448'
         if model_path is None:
             model_path = pretrain_settings[conf_name]['url']
         self.conf_name = conf_name

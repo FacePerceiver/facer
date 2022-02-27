@@ -1,5 +1,4 @@
 from typing import Dict, List
-from cv2 import circle
 import torch
 import colorsys
 import random
