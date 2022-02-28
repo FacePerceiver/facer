@@ -2,6 +2,16 @@
 
 Face related toolkit. This repo is still under construction to include more models.
 
+## Install
+
+The easiest way to install it is using pip:
+
+```bash
+pip install -U facer
+```
+No extra setup needs, pretrained weights will be downloaded automatically.
+
+
 ## Face Detection
 
 We simply wrap a retinaface detector for easy usage.
