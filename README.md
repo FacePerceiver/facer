@@ -1,4 +1,4 @@
-# FacER
+# FACER
 
 Face related toolkit. This repo is still under construction to include more models.
 
