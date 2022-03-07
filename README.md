@@ -7,7 +7,7 @@ Face related toolkit. This repo is still under construction to include more mode
 The easiest way to install it is using pip:
 
 ```bash
-pip install git+https://github.com/FacePerceiver/facer.git@master
+pip install pyfacer
 ```
 No extra setup needs, pretrained weights will be downloaded automatically.
 
