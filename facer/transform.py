@@ -148,9 +148,6 @@ def get_face_align_matrix(
 
 @functools.lru_cache(maxsize=128)
 def _meshgrid(h, w) -> Tuple[torch.Tensor, torch.Tensor]:
-    # yy, xx = np.meshgrid(np.arange(0, h, dtype=np.float32),
-    #                      np.arange(0, w, dtype=np.float32),
-    #                      indexing='ij')
     yy, xx = torch.meshgrid(torch.arange(h).float(),
                             torch.arange(w).float(), indexing='ij')
     return yy, xx
