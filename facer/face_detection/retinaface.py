@@ -650,23 +650,23 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
 
     # print(all_dets)
 
-    ret = []
-    for faces_in_one_image in all_dets:
-        batched_rects = []
-        batched_landmarks = []
-        batched_scores = []
+    rects = []
+    points = []
+    scores = []
+    image_ids = []
+    for image_id, faces_in_one_image in enumerate(all_dets):
         for rect, landmarks, score in faces_in_one_image:
-            batched_rects.append(rect)
-            batched_landmarks.append(landmarks)
-            batched_scores.append(score)
-        batched_rects = torch.stack(batched_rects, dim=0).to(img.device)
-        batched_landmarks = torch.stack(
-            batched_landmarks, dim=0).to(img.device)
-        batched_scores = torch.tensor(batched_scores).to(img.device)
-        ret.append({'rects': batched_rects,
-                   'points': batched_landmarks, 'scores': batched_scores})
+            rects.append(rect)
+            points.append(landmarks)
+            scores.append(score)
+            image_ids.append(image_id)
 
-    return ret
+    return {
+        'rects': torch.stack(rects, dim=0).to(img.device),
+        'points': torch.stack(points, dim=0).to(img.device),
+        'scores': torch.tensor(scores).to(img.device),
+        'image_ids': torch.tensor(image_ids).to(img.device)
+    }
 
 
 class RetinaFaceDetector(FaceDetector):
@@ -676,8 +676,9 @@ class RetinaFaceDetector(FaceDetector):
         images (torch.Tensor): b x c x h x w
 
     Returns:
-        data (List[Dict[str, torch.Tensor]]):
-        
+        faces (Dict[str, torch.Tensor]):
+
+            * image_ids: n, int
             * rects: n x 4 (x1, y1, x2, y2)
             * points: n x 5 x 2 (x, y)
             * scores: n
@@ -691,5 +692,5 @@ class RetinaFaceDetector(FaceDetector):
         self.net = load_net(model_path, conf_name)
         self.eval()
 
-    def forward(self, images: torch.Tensor) -> List[Dict[str, torch.Tensor]]:
+    def forward(self, images: torch.Tensor) -> Dict[str, torch.Tensor]:
         return batch_detect(self.net, images, threshold=0.8)

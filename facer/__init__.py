@@ -8,6 +8,7 @@ from .show import show_bchw, show_bhw
 
 from .face_detection import FaceDetector
 from .face_parsing import FaceParser
+from .face_landmark import FaceLandmarkDetector
 
 
 def _split_name(name: str) -> Tuple[str, Optional[str]]:

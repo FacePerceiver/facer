@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 import functools
 import torch
 import torch.nn.functional as F
 
 from ..util import download_jit
-from ..transform import get_face_align_grid, get_face_crop_grid
+from ..transform import (get_crop_and_resize_matrix, get_face_align_matrix,
+                         make_inverted_tanh_warp_grid, make_tanh_warp_grid)
 from .base import FaceParser
 
 pretrain_settings = {
@@ -12,7 +13,13 @@ pretrain_settings = {
         'url': [
             'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.celebm.main_ema_181500_jit.pt',
         ],
-        'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=0.8, warp_factor=0.0),
+        'matrix_src_tag': 'points',
+        'get_matrix_fn': functools.partial(get_face_align_matrix,
+                                           target_shape=(448, 448), target_face_scale=0.8),
+        'get_grid_fn': functools.partial(make_tanh_warp_grid,
+                                         warp_factor=0.0, warped_shape=(448, 448)),
+        'get_inv_grid_fn': functools.partial(make_inverted_tanh_warp_grid,
+                                             warp_factor=0.0, warped_shape=(448, 448)),
         'label_names': ['background', 'neck', 'face', 'cloth', 'rr', 'lr', 'rb', 'lb', 're',
                         'le', 'nose', 'imouth', 'llip', 'ulip', 'hair',
                         'glass', 'hat', 'earr', 'neckl']
@@ -21,7 +28,13 @@ pretrain_settings = {
         'url': [
             'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit.pt',
         ],
-        'get_grid_fn': functools.partial(get_face_align_grid, target_shape=(448, 448), target_face_scale=1.0, warp_factor=0.8),
+        'matrix_src_tag': 'points',
+        'get_matrix_fn': functools.partial(get_face_align_matrix,
+                                           target_shape=(448, 448), target_face_scale=1.0),
+        'get_grid_fn': functools.partial(make_tanh_warp_grid,
+                                         warp_factor=0.8, warped_shape=(448, 448)),
+        'get_inv_grid_fn': functools.partial(make_inverted_tanh_warp_grid,
+                                             warp_factor=0.8, warped_shape=(448, 448)),
         'label_names': ['background', 'face', 'rb', 'lb', 're',
                         'le', 'nose',  'ulip', 'imouth', 'llip', 'hair']
     }
@@ -43,6 +56,7 @@ class FaRLFaceParser(FaceParser):
         }
     ```
     """
+
     def __init__(self, conf_name: Optional[str] = None,
                  model_path: Optional[str] = None) -> None:
         super().__init__()
@@ -54,24 +68,24 @@ class FaRLFaceParser(FaceParser):
         self.net = download_jit(model_path)
         self.eval()
 
-    def forward(self, images, data):
+    def forward(self, images: torch.Tensor, data: Dict[str, Any]):
+        setting = pretrain_settings[self.conf_name]
         images = images.float() / 255.0
-        with torch.no_grad():
-            image_ids, grid, inv_grid = pretrain_settings[self.conf_name]['get_grid_fn'](
-                images, data)
+        _, _, h, w = images.shape
+
+        simages = images[data['image_ids']]
+        matrix = setting['get_matrix_fn'](data[setting['matrix_src_tag']])
+        grid = setting['get_grid_fn'](matrix=matrix, orig_shape=(h, w))
+        inv_grid = setting['get_inv_grid_fn'](matrix=matrix, orig_shape=(h, w))
 
         w_images = F.grid_sample(
-            images[image_ids], grid, mode='bilinear', align_corners=False)
+            simages, grid, mode='bilinear', align_corners=False)
 
         w_seg_logits, _ = self.net(w_images)  # (b*n) x c x h x w
 
         seg_logits = F.grid_sample(
             w_seg_logits, inv_grid, mode='bilinear', align_corners=False)
 
-        for image_id, datum in enumerate(data):
-            selected = [image_id == i for i in image_ids]
-            datum['seg'] = {
-                'logits': seg_logits[selected, :, :, :],
-                'label_names': pretrain_settings[self.conf_name]['label_names']
-            }
+        data['seg'] = {'logits': seg_logits,
+                       'label_names': setting['label_names']}
         return data

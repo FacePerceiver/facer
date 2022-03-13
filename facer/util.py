@@ -1,9 +1,8 @@
+from numpy import isin
 import torch
-import torch.utils.model_zoo
-from typing import Optional, Union, List
+from typing import Any, Generator, Optional, Tuple, Union, List, Dict
 import math
 import os
-from urllib.request import urlopen, Request
 from urllib.parse import urlparse
 import errno
 import sys
@@ -42,6 +41,16 @@ def bchw2hwc(images: torch.Tensor, nrows: Optional[int] = None, border: int = 2,
         xx = (w + border) * col
         result[yy:(yy+h), xx:(xx+w), :] = single_image
     return result
+
+
+def select_data(selection, data):
+    if isinstance(data, dict):
+        return {name: select_data(selection, val) for name, val in data.items()}
+    elif isinstance(data, (list, tuple)):
+        return [select_data(selection, val) for val in data]
+    elif isinstance(data, torch.Tensor):
+        return data[selection]
+    return data
 
 
 def download_jit(url_or_paths: Union[str, List[str]], model_dir=None, map_location=None):

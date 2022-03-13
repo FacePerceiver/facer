@@ -5,6 +5,8 @@ import random
 import numpy as np
 from skimage.draw import line_aa, circle_perimeter_aa
 
+from .util import select_data
+
 
 def _gen_random_colors(N, bright=True):
     brightness = 1.0 if bright else 0.7
@@ -120,6 +122,10 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     x = max(min(int(x), w-1), 0)
                     y = max(min(int(y), h-1), 0)
                     rr, cc, val = circle_perimeter_aa(y, x, 1)
+                    valid = np.all([rr >= 0, rr < h, cc >= 0, cc < w], axis=0)
+                    rr = rr[valid]
+                    cc = cc[valid]
+                    val = val[valid]
                     val = val[:, None][:, [0, 0, 0]]
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
 
@@ -130,15 +136,16 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                 seg_probs = seg_logits.softmax(dim=0)
                 seg_labels = seg_probs.argmax(dim=0).cpu().numpy()
                 image = (_blend_labels(image.astype(np.float32) /
-                         255, seg_labels, 
+                         255, seg_labels,
                          label_names_dict=label_names) * 255).astype(dtype)
 
     return torch.from_numpy(image).to(device=device)
 
 
-def draw_bchw(images: torch.Tensor, data: List[Dict[str, torch.Tensor]]) -> torch.Tensor:
+def draw_bchw(images: torch.Tensor, data: Dict[str, torch.Tensor]) -> torch.Tensor:
     images2 = []
-    for image_chw, d in zip(images, data):
+    for image_id, image_chw in enumerate(images):
+        selected_data = select_data(image_id == data['image_ids'], data)
         images2.append(
-            _draw_hwc(image_chw.permute(1, 2, 0), d).permute(2, 0, 1))
+            _draw_hwc(image_chw.permute(1, 2, 0), selected_data).permute(2, 0, 1))
     return torch.stack(images2, dim=0)
