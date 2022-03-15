@@ -188,12 +188,12 @@ def _safe_arctanh(x: torch.Tensor, eps: float = 0.001) -> torch.Tensor:
     return torch.clamp(x, -1+eps, 1-eps).arctanh()
 
 
-def tanh_warp_transform(coords: torch.Tensor, matrix: torch.Tensor,
-                        warp_factor: float, warped_shape: Tuple[int, int]):
-    """ Tanh-warp function.
+def inverted_tanh_warp_transform(coords: torch.Tensor, matrix: torch.Tensor,
+                                 warp_factor: float, warped_shape: Tuple[int, int]):
+    """ Inverted tanh-warp function.
 
     Args:
-        coords (torch.Tensor): b x n x 2 (x, y).
+        coords (torch.Tensor): b x n x 2 (x, y). The transformed coordinates.
         matrix: b x 3 x 3. A matrix that transforms un-normalized coordinates 
             from the original image to the aligned yet not-warped image.
         warp_factor (float): The warp factor. 
@@ -201,7 +201,7 @@ def tanh_warp_transform(coords: torch.Tensor, matrix: torch.Tensor,
         warped_shape (tuple): [height, width].
 
     Returns:
-        torch.Tensor: b x n x 2 (x, y).
+        torch.Tensor: b x n x 2 (x, y). The original coordinates.
     """
     h, w, *_ = warped_shape
     # h -= 1
@@ -241,13 +241,13 @@ def tanh_warp_transform(coords: torch.Tensor, matrix: torch.Tensor,
     return coords_homo[:, :, :2] / coords_homo[:, :, [2, 2]]
 
 
-def inverted_tanh_warp_transform(
+def tanh_warp_transform(
         coords: torch.Tensor, matrix: torch.Tensor,
         warp_factor: float, warped_shape: Tuple[int, int]):
-    """ Inverted Tanh-warp function.
+    """ Tanh-warp function.
 
     Args:
-        coords (torch.Tensor): b x n x 2 (x, y).
+        coords (torch.Tensor): b x n x 2 (x, y). The original coordinates.
         matrix: b x 3 x 3. A matrix that transforms un-normalized coordinates 
             from the original image to the aligned yet not-warped image.
         warp_factor (float): The warp factor. 
@@ -255,7 +255,7 @@ def inverted_tanh_warp_transform(
         warped_shape (tuple): [height, width].
 
     Returns:
-        torch.Tensor: b x n x 2 (x, y).
+        torch.Tensor: b x n x 2 (x, y). The transformed coordinates.
     """
     h, w, *_ = warped_shape
     # h -= 1
@@ -311,7 +311,7 @@ def make_tanh_warp_grid(matrix: torch.Tensor, warp_factor: float,
     return _forge_grid(
         matrix.size(0), matrix.device,
         warped_shape,
-        functools.partial(tanh_warp_transform,
+        functools.partial(inverted_tanh_warp_transform,
                           matrix=matrix,
                           warp_factor=warp_factor,
                           warped_shape=warped_shape)) / w_h*2-1
@@ -336,7 +336,7 @@ def make_inverted_tanh_warp_grid(matrix: torch.Tensor, warp_factor: float,
     return _forge_grid(
         matrix.size(0), matrix.device,
         orig_shape,
-        functools.partial(inverted_tanh_warp_transform,
+        functools.partial(tanh_warp_transform,
                           matrix=matrix,
                           warp_factor=warp_factor,
                           warped_shape=warped_shape)) / w_h * 2-1
