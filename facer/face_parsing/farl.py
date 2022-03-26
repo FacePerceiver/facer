@@ -9,21 +9,6 @@ from ..transform import (get_crop_and_resize_matrix, get_face_align_matrix,
 from .base import FaceParser
 
 pretrain_settings = {
-    'celebm/448': {
-        'url': [
-            'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.celebm.main_ema_181500_jit.pt',
-        ],
-        'matrix_src_tag': 'points',
-        'get_matrix_fn': functools.partial(get_face_align_matrix,
-                                           target_shape=(448, 448), target_face_scale=0.8),
-        'get_grid_fn': functools.partial(make_tanh_warp_grid,
-                                         warp_factor=0.0, warped_shape=(448, 448)),
-        'get_inv_grid_fn': functools.partial(make_inverted_tanh_warp_grid,
-                                             warp_factor=0.0, warped_shape=(448, 448)),
-        'label_names': ['background', 'neck', 'face', 'cloth', 'rr', 'lr', 'rb', 'lb', 're',
-                        'le', 'nose', 'imouth', 'llip', 'ulip', 'hair',
-                        'glass', 'hat', 'earr', 'neckl']
-    },
     'lapa/448': {
         'url': [
             'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit.pt',
@@ -58,14 +43,14 @@ class FaRLFaceParser(FaceParser):
     """
 
     def __init__(self, conf_name: Optional[str] = None,
-                 model_path: Optional[str] = None) -> None:
+                 model_path: Optional[str] = None, device=None) -> None:
         super().__init__()
         if conf_name is None:
             conf_name = 'lapa/448'
         if model_path is None:
             model_path = pretrain_settings[conf_name]['url']
         self.conf_name = conf_name
-        self.net = download_jit(model_path)
+        self.net = download_jit(model_path, map_location=device)
         self.eval()
 
     def forward(self, images: torch.Tensor, data: Dict[str, Any]):

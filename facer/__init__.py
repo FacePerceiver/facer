@@ -8,7 +8,6 @@ from .show import show_bchw, show_bhw
 
 from .face_detection import FaceDetector
 from .face_parsing import FaceParser
-from .face_landmark import FaceLandmarkDetector
 
 
 def _split_name(name: str) -> Tuple[str, Optional[str]]:
@@ -32,6 +31,6 @@ def face_parser(name: str, device: torch.device) -> FaceParser:
     parser_type, conf_name = _split_name(name)
     if parser_type == 'farl':
         from .face_parsing import FaRLFaceParser
-        return FaRLFaceParser(conf_name).to(device)
+        return FaRLFaceParser(conf_name, device=device).to(device)
     else:
         raise RuntimeError(f'Unknown parser type: {parser_type}')
