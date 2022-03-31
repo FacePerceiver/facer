@@ -11,7 +11,7 @@ from .base import FaceParser
 pretrain_settings = {
     'lapa/448': {
         'url': [
-            'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit.pt',
+            'https://github.com/FacePerceiver/facer/releases/download/models-v1/face_parsing.farl.lapa.main_ema_136500_jit191.pt',
         ],
         'matrix_src_tag': 'points',
         'get_matrix_fn': functools.partial(get_face_align_matrix,
