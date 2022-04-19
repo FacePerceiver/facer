@@ -1,7 +1,6 @@
 # largely borrowed from https://github.dev/elliottzheng/batch-face/face_detection/alignment.py
 
 from typing import Dict, List, Optional, Tuple
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -179,7 +178,6 @@ class ClassHead(nn.Module):
     def forward(self, x):
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-
         return out.view(out.shape[0], -1, 2)
 
 
@@ -193,7 +191,6 @@ class BboxHead(nn.Module):
     def forward(self, x):
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-
         return out.view(out.shape[0], -1, 4)
 
 
@@ -207,7 +204,6 @@ class LandmarkHead(nn.Module):
     def forward(self, x):
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-
         return out.view(out.shape[0], -1, 10)
 
 
@@ -224,7 +220,6 @@ class RetinaFace(nn.Module):
             backbone = MobileNetV1()
         elif cfg["name"] == "Resnet50":
             import torchvision.models as models
-
             backbone = models.resnet50(pretrained=cfg["pretrain"])
 
         self.body = _utils.IntermediateLayerGetter(
@@ -301,7 +296,7 @@ class RetinaFace(nn.Module):
 
 
 # Adapted from https://github.com/Hakuyume/chainer-ssd
-def decode(loc, priors, variances):
+def decode(loc: torch.Tensor, priors: torch.Tensor, variances: Tuple[float, float]) -> torch.Tensor:
     boxes = torch.cat(
         (
             priors[:, :2] + loc[:, :2] * variances[0] * priors[:, 2:],
@@ -314,7 +309,7 @@ def decode(loc, priors, variances):
     return boxes
 
 
-def decode_landm(pre, priors, variances):
+def decode_landm(pre: torch.Tensor, priors: torch.Tensor, variances: Tuple[float, float]) -> torch.Tensor:
     landms = torch.cat(
         (
             priors[:, :2] + pre[:, :2] * variances[0] * priors[:, 2:],
@@ -328,7 +323,7 @@ def decode_landm(pre, priors, variances):
     return landms
 
 
-def py_cpu_nms(dets, thresh):
+def nms(dets: torch.Tensor, thresh: float) -> List[int]:
     """Pure Python NMS baseline."""
     x1 = dets[:, 0]
     y1 = dets[:, 1]
@@ -337,31 +332,30 @@ def py_cpu_nms(dets, thresh):
     scores = dets[:, 4]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
-    order = scores.argsort()[::-1]
+    order = torch.flip(scores.argsort(), [0])
 
     keep = []
-    while order.size > 0:
-        i = order[0]
+    while order.numel() > 0:
+        i = order[0].item()
         keep.append(i)
-        xx1 = np.maximum(x1[i], x1[order[1:]])
-        yy1 = np.maximum(y1[i], y1[order[1:]])
-        xx2 = np.minimum(x2[i], x2[order[1:]])
-        yy2 = np.minimum(y2[i], y2[order[1:]])
+        xx1 = torch.maximum(x1[i], x1[order[1:]])
+        yy1 = torch.maximum(y1[i], y1[order[1:]])
+        xx2 = torch.minimum(x2[i], x2[order[1:]])
+        yy2 = torch.minimum(y2[i], y2[order[1:]])
 
-        w = np.maximum(0.0, xx2 - xx1 + 1)
-        h = np.maximum(0.0, yy2 - yy1 + 1)
+        w = torch.maximum(torch.tensor(0.0).to(dets), xx2 - xx1 + 1)
+        h = torch.maximum(torch.tensor(0.0).to(dets), yy2 - yy1 + 1)
         inter = w * h
         ovr = inter / (areas[i] + areas[order[1:]] - inter)
 
-        inds = np.where(ovr <= thresh)[0]
+        inds = torch.where(ovr <= thresh)[0]
         order = order[inds + 1]
 
     return keep
 
 
-class PriorBox(object):
-    def __init__(self, cfg, image_size=None, phase="train"):
-        super(PriorBox, self).__init__()
+class PriorBox:
+    def __init__(self, cfg: dict, image_size: Tuple[int, int]):
         self.min_sizes = cfg["min_sizes"]
         self.steps = cfg["steps"]
         self.clip = cfg["clip"]
@@ -370,9 +364,8 @@ class PriorBox(object):
             [ceil(self.image_size[0] / step), ceil(self.image_size[1] / step)]
             for step in self.steps
         ]
-        self.name = "s"
 
-    def forward(self):
+    def generate_anchors(self, device) -> torch.Tensor:
         anchors = []
         for k, f in enumerate(self.feature_maps):
             min_sizes = self.min_sizes[k]
@@ -390,10 +383,10 @@ class PriorBox(object):
                         anchors += [cx, cy, s_kx, s_ky]
 
         # back to torch land
-        output = torch.Tensor(anchors).view(-1, 4)
+        output = torch.tensor(anchors).view(-1, 4)
         if self.clip:
             output.clamp_(max=1, min=0)
-        return output
+        return output.to(device=device)
 
 
 cfg_mnet = {
@@ -499,21 +492,21 @@ def load_net(model_path, network="mobilenet"):
     return net
 
 
-def parse_det(det) -> Tuple[torch.Tensor, torch.Tensor, float]:
+def parse_det(det: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, float]:
     landmarks = det[5:].reshape(5, 2)
     box = det[:4]
     score = det[4]
-    return torch.from_numpy(box), torch.from_numpy(landmarks), score
+    return box, landmarks, score.item()
 
 
 def post_process(
-    loc,
-    conf,
-    landms,
-    prior_data,
-    cfg,
-    scale,
-    scale1,
+    loc: torch.Tensor,
+    conf: torch.Tensor,
+    landms: torch.Tensor,
+    prior_data: torch.Tensor,
+    cfg: dict,
+    scale: float,
+    scale1: float,
     resize,
     confidence_threshold,
     top_k,
@@ -522,29 +515,30 @@ def post_process(
 ):
     boxes = decode(loc, prior_data, cfg["variance"])
     boxes = boxes * scale / resize
-    boxes = boxes.cpu().numpy()
-    scores = conf.cpu().numpy()[:, 1]
+    # boxes = boxes.cpu().numpy()
+    # scores = conf.cpu().numpy()[:, 1]
+    scores = conf[:, 1]
     landms_copy = decode_landm(landms, prior_data, cfg["variance"])
 
     landms_copy = landms_copy * scale1 / resize
-    landms_copy = landms_copy.cpu().numpy()
+    # landms_copy = landms_copy.cpu().numpy()
 
     # ignore low scores
-    inds = np.where(scores > confidence_threshold)[0]
+    inds = torch.where(scores > confidence_threshold)[0]
     boxes = boxes[inds]
     landms_copy = landms_copy[inds]
     scores = scores[inds]
 
     # keep top-K before NMS
-    order = scores.argsort()[::-1][:top_k]
+    order = torch.flip(scores.argsort(), [0])[:top_k]
     boxes = boxes[order]
     landms_copy = landms_copy[order]
     scores = scores[order]
 
     # do NMS
-    dets = np.hstack((boxes, scores[:, np.newaxis])).astype(
-        np.float32, copy=False)
-    keep = py_cpu_nms(dets, nms_threshold)
+    dets = torch.hstack((boxes, scores.unsqueeze(-1))).to(
+        dtype=torch.float32, copy=False)
+    keep = nms(dets, nms_threshold)
     # keep = nms(dets, args.nms_threshold,force_cpu=args.cpu)
     dets = dets[keep, :]
     landms_copy = landms_copy[keep]
@@ -553,7 +547,7 @@ def post_process(
     dets = dets[:keep_top_k, :]
     landms_copy = landms_copy[:keep_top_k, :]
 
-    dets = np.concatenate((dets, landms_copy), axis=1)
+    dets = torch.cat((dets, landms_copy), dim=1)
     # show image
     dets = sorted(dets, key=lambda x: x[4], reverse=True)
     dets = [parse_det(x) for x in dets]
@@ -561,39 +555,20 @@ def post_process(
     return dets
 
 
-@torch.no_grad()
+# @torch.no_grad()
 def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
-    """
-    Args:
-        net:
-        images: b x 3(rgb) x h x w, 0-255, uint8
-
-    Returns:
-
-    """
     confidence_threshold = threshold
     cfg = cfg_mnet
     top_k = 5000
     nms_threshold = 0.4
     keep_top_k = 750
     resize = 1
-    # if not is_tensor:
-    #     try:
-    #         img = np.float32(images)
-    #     except ValueError:
-    #         raise NotImplementedError("Input images must of same size")
-    #     img = torch.from_numpy(img)
-    # else:
-    #
+
     img = images.float()
-    # img = img.to(device)
-    # if cv:
-    # img = img[..., [2, 1, 0]]
     mean = torch.as_tensor([104, 117, 123], dtype=img.dtype, device=img.device).view(
         1, 3, 1, 1
     )
     img -= mean
-    # img = img.permute(0, 3, 1, 2)
     (
         _,
         _,
@@ -610,8 +585,7 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
     loc, conf, landms = net(img)  # forward pass
 
     priorbox = PriorBox(cfg, image_size=(im_height, im_width))
-    priors = priorbox.forward()
-    prior_data = priors.to(img.device)
+    prior_data = priorbox.generate_anchors(device=img.device)
     scale1 = torch.as_tensor(
         [
             img.shape[3],
@@ -647,8 +621,6 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
         )
         for loc_i, conf_i, landms_i in zip(loc, conf, landms)
     ]
-
-    # print(all_dets)
 
     rects = []
     points = []
