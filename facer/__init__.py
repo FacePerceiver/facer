@@ -18,19 +18,19 @@ def _split_name(name: str) -> Tuple[str, Optional[str]]:
     return detector_type, conf_name
 
 
-def face_detector(name: str, device: torch.device) -> FaceDetector:
+def face_detector(name: str, device: torch.device, **kwargs) -> FaceDetector:
     detector_type, conf_name = _split_name(name)
     if detector_type == 'retinaface':
         from .face_detection import RetinaFaceDetector
-        return RetinaFaceDetector(conf_name).to(device)
+        return RetinaFaceDetector(conf_name, **kwargs).to(device)
     else:
         raise RuntimeError(f'Unknown detector type: {detector_type}')
 
 
-def face_parser(name: str, device: torch.device) -> FaceParser:
+def face_parser(name: str, device: torch.device, **kwargs) -> FaceParser:
     parser_type, conf_name = _split_name(name)
     if parser_type == 'farl':
         from .face_parsing import FaRLFaceParser
-        return FaRLFaceParser(conf_name, device=device).to(device)
+        return FaRLFaceParser(conf_name, device=device, **kwargs).to(device)
     else:
         raise RuntimeError(f'Unknown parser type: {parser_type}')

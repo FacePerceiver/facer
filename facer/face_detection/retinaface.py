@@ -633,11 +633,14 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
             scores.append(score)
             image_ids.append(image_id)
 
+    if len(rects) == 0:
+        return dict()
+
     return {
         'rects': torch.stack(rects, dim=0).to(img.device),
         'points': torch.stack(points, dim=0).to(img.device),
         'scores': torch.tensor(scores).to(img.device),
-        'image_ids': torch.tensor(image_ids).to(img.device)
+        'image_ids': torch.tensor(image_ids).to(img.device),
     }
 
 
@@ -645,7 +648,7 @@ class RetinaFaceDetector(FaceDetector):
     """RetinaFaceDetector
 
     Args:
-        images (torch.Tensor): b x c x h x w
+        images (torch.Tensor): b x c x h x w, uint8, 0~255.
 
     Returns:
         faces (Dict[str, torch.Tensor]):
@@ -657,12 +660,13 @@ class RetinaFaceDetector(FaceDetector):
     """
 
     def __init__(self, conf_name: Optional[str] = None,
-                 model_path: Optional[str] = None) -> None:
+                 model_path: Optional[str] = None, threshold=0.8) -> None:
         super().__init__()
         if conf_name is None:
             conf_name = 'mobilenet'
         self.net = load_net(model_path, conf_name)
+        self.threshold = threshold
         self.eval()
 
     def forward(self, images: torch.Tensor) -> Dict[str, torch.Tensor]:
-        return batch_detect(self.net, images, threshold=0.8)
+        return batch_detect(self.net, images, threshold=self.threshold)
