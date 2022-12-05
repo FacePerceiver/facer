@@ -101,7 +101,7 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
 
     for tag, batch_content in data.items():
         if tag == 'rects':
-            for content in batch_content:
+            for cid, content in enumerate(batch_content):
                 x1, y1, x2, y2 = [int(v) for v in content]
                 y1, y2 = [max(min(v, h-1), 0) for v in [y1, y2]]
                 x1, x2 = [max(min(v, w-1), 0) for v in [x1, x2]]
@@ -114,6 +114,14 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     rr, cc, val = line_aa(yy1, xx1, yy2, xx2)
                     val = val[:, None][:, [0, 0, 0]]
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
+
+                if 'scores' in data:
+                    import cv2
+                    score = data['scores'][cid].item()
+                    score_str = f'{score:0.3f}'
+                    cv2.putText(image, score_str, org=(x1, y2),
+                                fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                                fontScale=0.6, color=(255, 255, 255), thickness=1)
 
         if tag == 'points':
             for content in batch_content:
