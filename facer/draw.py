@@ -99,6 +99,7 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
     dtype = image.dtype
     h, w, _ = image.shape
 
+    draw_score_error = False
     for tag, batch_content in data.items():
         if tag == 'rects':
             for cid, content in enumerate(batch_content):
@@ -116,12 +117,20 @@ def _draw_hwc(image: torch.Tensor, data: Dict[str, torch.Tensor]):
                     image[rr, cc] = image[rr, cc] * (1.0-val) + val * 255
 
                 if 'scores' in data:
-                    import cv2
-                    score = data['scores'][cid].item()
-                    score_str = f'{score:0.3f}'
-                    cv2.putText(image, score_str, org=(x1, y2),
-                                fontFace=cv2.FONT_HERSHEY_TRIPLEX,
-                                fontScale=0.6, color=(255, 255, 255), thickness=1)
+                    try:
+                        import cv2
+                        score = data['scores'][cid].item()
+                        score_str = f'{score:0.3f}'
+                        image_c = np.array(image).copy()
+                        cv2.putText(image_c, score_str, org=(int(x1), int(y2)),
+                                    fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                                    fontScale=0.6, color=(255, 255, 255), thickness=1)
+                        image[:, :, :] = image_c
+                    except Exception as e:
+                        if not draw_score_error:
+                            print(f'Failed to draw scores on image.')
+                            print(e)
+                        draw_score_error = True
 
         if tag == 'points':
             for content in batch_content:

@@ -299,7 +299,7 @@ def make_tanh_warp_grid(matrix: torch.Tensor, warp_factor: float,
                         orig_shape: Tuple[int, int]):
     """
     Args:
-        matrix: bx4x4 matrix.
+        matrix: bx3x3 matrix.
         warp_factor: The warping factor. `warp_factor=1.0` represents a vannila Tanh-warping, 
            `warp_factor=0.0` represents a cropping.
         warped_shape: The target image shape to transform to.
@@ -323,7 +323,7 @@ def make_inverted_tanh_warp_grid(matrix: torch.Tensor, warp_factor: float,
                                  orig_shape: Tuple[int, int]):
     """
     Args:
-        matrix: bx4x4 matrix.
+        matrix: bx3x3 matrix.
         warp_factor: The warping factor. `warp_factor=1.0` represents a vannila Tanh-warping, 
            `warp_factor=0.0` represents a cropping.
         warped_shape: The target image shape to transform to.
