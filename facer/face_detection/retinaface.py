@@ -669,4 +669,4 @@ class RetinaFaceDetector(FaceDetector):
         self.eval()
 
     def forward(self, images: torch.Tensor) -> Dict[str, torch.Tensor]:
-        return batch_detect(self.net, images, threshold=self.threshold)
+        return batch_detect(self.net, images.clone(), threshold=self.threshold)
