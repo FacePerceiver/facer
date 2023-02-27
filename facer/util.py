@@ -40,8 +40,20 @@ def bchw2hwc(images: torch.Tensor, nrows: Optional[int] = None, border: int = 2,
         col = i % ncols
         yy = (h + border) * row
         xx = (w + border) * col
-        result[yy:(yy+h), xx:(xx+w), :] = single_image
+        result[yy:(yy + h), xx:(xx + w), :] = single_image
     return result
+
+
+def bchw2bhwc(images: torch.Tensor) -> torch.Tensor:
+    return images.permute(0, 2, 3, 1)
+
+
+def bhwc2bchw(images: torch.Tensor) -> torch.Tensor:
+    return images.permute(0, 3, 1, 2)
+
+
+def bhwc2hwc(images: torch.Tensor, *kargs, **kwargs) -> torch.Tensor:
+    return bchw2hwc(bhwc2bchw(images), *kargs, **kwargs)
 
 
 def select_data(selection, data):
