@@ -2,6 +2,7 @@ from typing import List, Dict, Callable, Tuple, Optional
 import torch
 import torch.nn.functional as F
 import functools
+import numpy as np
 
 
 def get_crop_and_resize_matrix(
@@ -145,6 +146,46 @@ def get_face_align_matrix(
 
     return get_similarity_transform_matrix(face_pts, target_pts)
 
+
+def rot90(v):
+    return np.array([-v[1], v[0]])
+
+
+def get_quad(lm: torch.Tensor):
+    # N,2
+    lm = lm.detach().cpu().numpy()
+    # Choose oriented crop rectangle.
+    eye_avg = (lm[0] + lm[1]) * 0.5 + 0.5
+    mouth_avg = (lm[3] + lm[4]) * 0.5 + 0.5
+    eye_to_eye = lm[1] - lm[0]
+    eye_to_mouth = mouth_avg - eye_avg
+    x = eye_to_eye - rot90(eye_to_mouth)
+    x /= np.hypot(*x)
+    x *= max(np.hypot(*eye_to_eye) * 2.0, np.hypot(*eye_to_mouth) * 1.8)
+    y = rot90(x)
+    c = eye_avg + eye_to_mouth * 0.1
+    quad = np.stack([c - x - y, c - x + y, c + x + y, c + x - y])
+    quad_for_coeffs = quad[[0,3, 2,1]] #  顺序改一下
+    return torch.from_numpy(quad_for_coeffs).float()
+
+
+def get_face_align_matrix_celebm(
+        face_pts: torch.Tensor, target_shape: Tuple[int, int]):
+
+    face_pts = torch.stack([get_quad(pts) for pts in face_pts], dim=0).to(face_pts)
+
+    assert target_shape[0] == target_shape[1]
+    target_size  = target_shape[0]
+    target_pts = torch.as_tensor([[0, 0], [target_size,0], [target_size, target_size], [0, target_size]]).to(face_pts)
+
+    if target_pts.dim() == 2:
+        target_pts = target_pts.unsqueeze(0)
+    if target_pts.size(0) == 1:
+        target_pts = target_pts.broadcast_to(face_pts.shape)
+
+    assert target_pts.shape == face_pts.shape
+
+    return get_similarity_transform_matrix(face_pts, target_pts)
 
 @functools.lru_cache(maxsize=128)
 def _meshgrid(h, w) -> Tuple[torch.Tensor, torch.Tensor]:
