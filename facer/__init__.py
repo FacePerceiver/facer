@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 import torch
 
 from .io import read_hwc, write_hwc
-from .util import hwc2bchw, bchw2hwc
+from .util import hwc2bchw, bchw2hwc, bchw2bhwc, bhwc2bchw, bhwc2hwc
 from .draw import draw_bchw
 from .show import show_bchw, show_bhw
 
