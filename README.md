@@ -2,6 +2,10 @@
 
 Face related toolkit. This repo is still under construction to include more models.
 
+## Updates
+
+- [27/04/2023] Face parsing model trained on CelebM dataset is available, check it out [here](https://github.com/FacePerceiver/facer/blob/main/samples/face_parsing.ipynb).
+
 ## Install
 
 The easiest way to install it is using pip:
