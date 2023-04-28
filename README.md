@@ -39,11 +39,12 @@ Check [this notebook](./samples/face_parsing.ipynb).
 
 Please consider citing
 ```
-@article{zheng2021farl,
-  title={General Facial Representation Learning in a Visual-Linguistic Manner},
+@inproceedings{zheng2022farl,
+  title={General facial representation learning in a visual-linguistic manner},
   author={Zheng, Yinglin and Yang, Hao and Zhang, Ting and Bao, Jianmin and Chen, Dongdong and Huang, Yangyu and Yuan, Lu and Chen, Dong and Zeng, Ming and Wen, Fang},
-  journal={arXiv preprint arXiv:2112.03109},
-  year={2021}
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={18697--18709},
+  year={2022}
 }
 ``` 
 
