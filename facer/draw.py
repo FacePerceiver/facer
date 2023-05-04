@@ -4,7 +4,7 @@ import colorsys
 import random
 import numpy as np
 from skimage.draw import line_aa, circle_perimeter_aa
-
+import cv2
 from .util import select_data
 
 
@@ -166,3 +166,21 @@ def draw_bchw(images: torch.Tensor, data: Dict[str, torch.Tensor]) -> torch.Tens
         images2.append(
             _draw_hwc(image_chw.permute(1, 2, 0), selected_data).permute(2, 0, 1))
     return torch.stack(images2, dim=0)
+
+def draw_landmarks(img, bbox=None, landmark=None, color=(0, 255, 0)):
+    """
+    Input:
+    - img: gray or RGB
+    - bbox: type of BBox
+    - landmark: reproject landmark of (5L, 2L)
+    Output:
+    - img marked with landmark and bbox
+    """
+    img = cv2.UMat(img).get()
+    if bbox is not None:
+        x1, y1, x2, y2 = np.array(bbox)[:4].astype(np.int32)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+    if landmark is not None:
+        for x, y in np.array(landmark).astype(np.int32):
+            cv2.circle(img, (int(x), int(y)), 2, color, -1)
+    return img

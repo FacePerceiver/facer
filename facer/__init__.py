@@ -3,11 +3,12 @@ import torch
 
 from .io import read_hwc, write_hwc
 from .util import hwc2bchw, bchw2hwc, bchw2bhwc, bhwc2bchw, bhwc2hwc
-from .draw import draw_bchw
+from .draw import draw_bchw, draw_landmarks
 from .show import show_bchw, show_bhw
 
 from .face_detection import FaceDetector
 from .face_parsing import FaceParser
+from .face_alignment import FaceAlignment
 
 
 def _split_name(name: str) -> Tuple[str, Optional[str]]:
@@ -34,3 +35,12 @@ def face_parser(name: str, device: torch.device, **kwargs) -> FaceParser:
         return FaRLFaceParser(conf_name, device=device, **kwargs).to(device)
     else:
         raise RuntimeError(f'Unknown parser type: {parser_type}')
+
+
+def face_aligner(name: str, device: torch.device, **kwargs) -> FaceAlignment:
+    aligner_type, conf_name = _split_name(name)
+    if aligner_type == 'farl':
+        from .face_alignment import FaRLFaceAlignment
+        return FaRLFaceAlignment(conf_name, device=device, **kwargs).to(device)
+    else:
+        raise RuntimeError(f'Unknown aligner type: {aligner_type}')

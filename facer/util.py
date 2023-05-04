@@ -123,7 +123,7 @@ def select_data(selection, data):
     return data
 
 
-def download_jit(url_or_paths: Union[str, List[str]], model_dir=None, map_location=None):
+def download_jit(url_or_paths: Union[str, List[str]], model_dir=None, map_location=None, **kwargs):
     if isinstance(url_or_paths, str):
         url_or_paths = [url_or_paths]
 
@@ -159,7 +159,7 @@ def download_jit(url_or_paths: Union[str, List[str]], model_dir=None, map_locati
             else:
                 cached_file = url_or_path
 
-            return torch.jit.load(cached_file, map_location=map_location)
+            return torch.jit.load(cached_file, map_location=map_location, **kwargs)
         except:
             sys.stderr.write(f'failed downloading from {url_or_path}\n')
             raise

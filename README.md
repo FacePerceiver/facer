@@ -3,8 +3,8 @@
 Face related toolkit. This repo is still under construction to include more models.
 
 ## Updates
-
-- [27/04/2023] Face parsing model trained on CelebM dataset is available, check it out [here](https://github.com/FacePerceiver/facer/blob/main/samples/face_parsing.ipynb).
+- [04/05/2023] Face alignment model trained on IBUG300W, AFLW19, WFLW dataset is available, check it out [here](./samples/face_alignment.ipynb).
+- [27/04/2023] Face parsing model trained on CelebM dataset is available, check it out [here](./samples/face_parsing.ipynb).
 
 ## Install
 
@@ -48,3 +48,19 @@ Please consider citing
 }
 ``` 
 
+
+## Face Alignment
+
+We wrap the [FaRL](https://github.com/faceperceiver/farl) models for face alignment.
+Check [this notebook](./samples/face_alignment.ipynb).
+
+Please consider citing
+```
+@inproceedings{zheng2022farl,
+  title={General facial representation learning in a visual-linguistic manner},
+  author={Zheng, Yinglin and Yang, Hao and Zhang, Ting and Bao, Jianmin and Chen, Dongdong and Huang, Yangyu and Yuan, Lu and Chen, Dong and Zeng, Ming and Wen, Fang},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={18697--18709},
+  year={2022}
+}
+``` 
