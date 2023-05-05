@@ -19,7 +19,20 @@ No extra setup needs, pretrained weights will be downloaded automatically.
 ## Face Detection
 
 We simply wrap a retinaface detector for easy usage.
-Check [this notebook](./samples/face_detect.ipynb).
+```python
+import facer
+
+image = facer.hwc2bchw(facer.read_hwc('data/twogirls.jpg')).to(device=device)  # image: 1 x 3 x h x w
+
+face_detector = facer.face_detector('retinaface/mobilenet', device=device)
+with torch.inference_mode():
+    faces = face_detector(image)
+
+facer.show_bchw(facer.draw_bchw(image, faces))
+```
+![](./samples/example_output/detect.png)
+
+Check [this notebook](./samples/face_detect.ipynb) for full example.
 
 Please consider citing
 ```
@@ -35,7 +48,35 @@ Please consider citing
 ## Face Parsing
 
 We wrap the [FaRL](https://github.com/faceperceiver/farl) models for face parsing.
-Check [this notebook](./samples/face_parsing.ipynb).
+```python
+import torch
+import facer
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+image = facer.hwc2bchw(facer.read_hwc('data/twogirls.jpg')
+                       ).to(device=device)  # image: 1 x 3 x h x w
+
+face_detector = facer.face_detector('retinaface/mobilenet', device=device)
+with torch.inference_mode():
+    faces = face_detector(image)
+
+face_parser = facer.face_parser('farl/lapa/448', device=device) # optional "farl/celebm/448"
+
+with torch.inference_mode():
+    faces = face_parser(image, faces)
+
+seg_logits = faces['seg']['logits']
+seg_probs = seg_logits.softmax(dim=1)  # nfaces x nclasses x h x w
+n_classes = seg_probs.size(1)
+vis_seg_probs = seg_probs.argmax(dim=1).float()/n_classes*255
+vis_img = vis_seg_probs.sum(0, keepdim=True)
+facer.show_bhw(vis_img)
+facer.show_bchw(facer.draw_bchw(image, faces))
+```
+![](./samples/example_output/parsing.png)
+
+Check [this notebook](./samples/face_parsing.ipynb) for full example.
 
 Please consider citing
 ```
@@ -52,7 +93,36 @@ Please consider citing
 ## Face Alignment
 
 We wrap the [FaRL](https://github.com/faceperceiver/farl) models for face alignment.
-Check [this notebook](./samples/face_alignment.ipynb).
+```python
+import torch
+import cv2
+from matplotlib import pyplot as plt
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+import facer
+img_file = 'data/twogirls.jpg'
+# image: 1 x 3 x h x w
+image = facer.hwc2bchw(facer.read_hwc(img_file)).to(device=device)  
+
+face_detector = facer.face_detector('retinaface/mobilenet', device=device)
+with torch.inference_mode():
+    faces = face_detector(image)
+
+face_aligner = facer.face_aligner('farl/ibug300w/448', device=device) # optional: "farl/wflw/448", "farl/aflw19/448"
+
+with torch.inference_mode():
+    faces = face_aligner(image, faces)
+
+img = cv2.imread(img_file)[..., ::-1]
+vis_img = img.copy()
+for pts in faces['alignment']:
+    vis_img = facer.draw_landmarks(vis_img, None, pts.cpu().numpy())
+plt.imshow(vis_img)
+```
+![](./samples/example_output/alignment.png)
+
+Check [this notebook](./samples/face_alignment.ipynb) for full example.
 
 Please consider citing
 ```
