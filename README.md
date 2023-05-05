@@ -15,6 +15,12 @@ pip install git+https://github.com/FacePerceiver/facer.git@main
 ```
 No extra setup needs, pretrained weights will be downloaded automatically.
 
+If you have trouble install from source, you can try install from PyPI:
+```bash
+pip install pyfacer
+```
+the PyPI version is not guaranteed to be the latest version, but we will try to keep it up to date.
+
 
 ## Face Detection
 
@@ -54,8 +60,7 @@ import facer
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-image = facer.hwc2bchw(facer.read_hwc('data/twogirls.jpg')
-                       ).to(device=device)  # image: 1 x 3 x h x w
+image = facer.hwc2bchw(facer.read_hwc('data/twogirls.jpg')).to(device=device)  # image: 1 x 3 x h x w
 
 face_detector = facer.face_detector('retinaface/mobilenet', device=device)
 with torch.inference_mode():
