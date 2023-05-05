@@ -27,13 +27,13 @@ def get_version():
 
 
 setup(
-    name="facer",
+    name="pyfacer",
     version=get_version(),
     description="Face related toolkit",
     author="FacePerceiver",
     url="https://github.com/FacePerceiver/facer",
     license="MIT",
-    keywords="face-detection pytorch RetinaFace face-parsing farl",
+    keywords="face-detection pytorch RetinaFace face-parsing farl face-alignment",
     project_urls={
         "Documentation": "https://github.com/FacePerceiver/facer",
         "Source": "https://github.com/FacePerceiver/facer",
