@@ -3,6 +3,7 @@
 Face related toolkit. This repo is still under construction to include more models.
 
 ## Updates
+- [14/05/2023] Face attribute recognition model trained on CelebA is available, check it out [here](./samples/face_attribute.ipynb).
 - [04/05/2023] Face alignment model trained on IBUG300W, AFLW19, WFLW dataset is available, check it out [here](./samples/face_alignment.ipynb).
 - [27/04/2023] Face parsing model trained on CelebM dataset is available, check it out [here](./samples/face_parsing.ipynb).
 
@@ -128,6 +129,50 @@ plt.imshow(vis_img)
 ![](./samples/example_output/alignment.png)
 
 Check [this notebook](./samples/face_alignment.ipynb) for full example.
+
+Please consider citing
+```
+@inproceedings{zheng2022farl,
+  title={General facial representation learning in a visual-linguistic manner},
+  author={Zheng, Yinglin and Yang, Hao and Zhang, Ting and Bao, Jianmin and Chen, Dongdong and Huang, Yangyu and Yuan, Lu and Chen, Dong and Zeng, Ming and Wen, Fang},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={18697--18709},
+  year={2022}
+}
+``` 
+
+## Face Attribute Recognition
+We wrap the [FaRL](https://github.com/faceperceiver/farl) models for face attribute recognition, the model achieves 92.06% accuracy on [CelebA](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset.
+
+```python
+import sys
+import torch
+import facer
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# image: 1 x 3 x h x w
+image = facer.hwc2bchw(facer.read_hwc("data/girl.jpg")).to(device=device)
+
+face_detector = facer.face_detector("retinaface/mobilenet", device=device)
+with torch.inference_mode():
+    faces = face_detector(image)
+
+face_attr = facer.face_attr("farl/celeba/224", device=device)
+with torch.inference_mode():
+    faces = face_attr(image, faces)
+
+labels = face_attr.labels
+face1_attrs = faces["attrs"][0] # get the first face's attributes
+
+print(labels)
+
+for prob, label in zip(face1_attrs, labels):
+    if prob > 0.5:
+        print(label, prob.item())
+```
+
+Check [this notebook](./samples/face_attribute.ipynb) for full example.
 
 Please consider citing
 ```

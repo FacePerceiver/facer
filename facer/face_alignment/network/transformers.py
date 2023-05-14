@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from . import farl
+from ... import farl
 
 
 def _make_fpns(vision_patch_size: int, output_channels: int):

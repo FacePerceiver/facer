@@ -1,8 +1,7 @@
-import torch
 import torch.nn as nn
 
-class FaceAlignment(nn.Module):
-    """ face alignment
+class FaceAttribute(nn.Module):
+    """ face attribute base class
 
     Args:
         images (torch.Tensor): b x c x h x w
@@ -19,6 +18,7 @@ class FaceAlignment(nn.Module):
             * image_ids (torch.Tensor): nfaces
             * rects (torch.Tensor): nfaces x 4 (x1, y1, x2, y2)
             * points (torch.Tensor): nfaces x 5 x 2 (x, y)
-            * alignment 
+            * attrs (Dict[str, Any]):
+                * logits (torch.Tensor): nfaces x nclasses  
     """
     pass

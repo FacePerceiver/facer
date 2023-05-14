@@ -9,6 +9,7 @@ from .show import show_bchw, show_bhw
 from .face_detection import FaceDetector
 from .face_parsing import FaceParser
 from .face_alignment import FaceAlignment
+from .face_attribute import FaceAttribute
 
 
 def _split_name(name: str) -> Tuple[str, Optional[str]]:
@@ -44,3 +45,11 @@ def face_aligner(name: str, device: torch.device, **kwargs) -> FaceAlignment:
         return FaRLFaceAlignment(conf_name, device=device, **kwargs).to(device)
     else:
         raise RuntimeError(f'Unknown aligner type: {aligner_type}')
+
+def face_attr(name: str, device: torch.device, **kwargs) -> FaceAttribute:
+    attr_type, conf_name = _split_name(name)
+    if attr_type == 'farl':
+        from .face_attribute import FaRLFaceAttribute
+        return FaRLFaceAttribute(conf_name, device=device, **kwargs).to(device)
+    else:
+        raise RuntimeError(f'Unknown attribute type: {attr_type}')
