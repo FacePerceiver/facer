@@ -634,7 +634,12 @@ def batch_detect(net: nn.Module, images: torch.Tensor, threshold: float = 0.5):
             image_ids.append(image_id)
 
     if len(rects) == 0:
-        return dict()
+        return {
+            'rects': torch.Tensor().to(img.device),
+            'points': torch.Tensor().to(img.device),
+            'scores': torch.Tensor().to(img.device),
+            'image_ids': torch.Tensor().to(img.device),
+        }
 
     return {
         'rects': torch.stack(rects, dim=0).to(img.device),
