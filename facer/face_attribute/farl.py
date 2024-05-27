@@ -7,6 +7,7 @@ from .base import FaceAttribute
 from ..farl import farl_classification
 from ..util import download_jit
 import numpy as np
+from torchvision.transforms import Normalize
 
 
 def get_std_points_xray(out_size=256, mid_size=500):
@@ -130,12 +131,12 @@ class FaRLFaceAttribute(FaceAttribute):
         self.net = load_face_attr(model_path, num_classes=setting["num_classes"], layers = setting["layers"])
         if device is not None:
             self.net = self.net.to(device)
-
+        self.normalize = Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
         self.eval()
 
     def forward(self, images: torch.Tensor, data: Dict[str, Any]):
         setting = pretrain_settings[self.conf_name]
-        images = images.float() / 255.0  # backbone 自带 normalize
+        images = images.float() / 255.0  
         _, _, h, w = images.shape
 
         simages = images[data["image_ids"]]
@@ -143,6 +144,7 @@ class FaRLFaceAttribute(FaceAttribute):
         grid = setting["get_grid_fn"](matrix=matrix, orig_shape=(h, w))
 
         w_images = F.grid_sample(simages, grid, mode="bilinear", align_corners=False)
+        w_images = self.normalize(w_images)
 
         outputs = self.net(w_images)
         probs = torch.sigmoid(outputs)
