@@ -192,7 +192,7 @@ def _meshgrid(h, w) -> Tuple[torch.Tensor, torch.Tensor]:
     yy, xx = torch.meshgrid(torch.arange(h).float(),
                             torch.arange(w).float(),
                             indexing='ij')
-    return yy, xx
+    return yy + 0.5, xx + 0.5
 
 
 def _forge_grid(batch_size: int, device: torch.device,
