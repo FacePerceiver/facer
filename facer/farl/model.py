@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch import nn
 import torch.utils.checkpoint as checkpoint
 import numpy as np
-from timm.models.layers import trunc_normal_, DropPath
+from timm.layers import trunc_normal_, DropPath
 
 
 class Bottleneck(nn.Module):
