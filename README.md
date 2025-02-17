@@ -3,6 +3,7 @@
 Face related toolkit. This repo is still under construction to include more models.
 
 ## Updates
+- [01/17/2025] FaRL Face Parsing is now available in [elliottzheng/batch-face](https://github.com/elliottzheng/batch-face?tab=readme-ov-file#face-parsing), which provides faster batch processing ability.
 - [14/05/2023] Face attribute recognition model trained on CelebA is available, check it out [here](./samples/face_attribute.ipynb).
 - [04/05/2023] Face alignment model trained on IBUG300W, AFLW19, WFLW dataset is available, check it out [here](./samples/face_alignment.ipynb).
 - [27/04/2023] Face parsing model trained on CelebM dataset is available, check it out [here](./samples/face_parsing.ipynb).
